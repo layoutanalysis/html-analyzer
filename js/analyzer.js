@@ -248,6 +248,7 @@ function collectionLoaded (snapshotColl) {
     resultTable = new ResultTable({
         snapshots: changeCandidates,
         analyzedProperties: analyzedProperties,
+        totalNumberOfSnapshots: snapshotColl.length,
         medium: medium
     });
     $("#results").append(resultTable.render().el);
