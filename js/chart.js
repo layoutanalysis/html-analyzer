@@ -1,4 +1,4 @@
-var config = {
+var chartConfig = {
     type: 'line',
     data: {
         labels: ["January", "February", "March", "April", "May", "June", "July"],
@@ -54,7 +54,7 @@ var config = {
 function showSimilarityChart(snapshotDates, datasets){
     var ctx = document.getElementById("canvas").getContext("2d");
     var default_colors = ['#3366CC','#DC3912','#FF9900','#109618','#990099','#3B3EAC','#0099C6','#DD4477','#66AA00','#B82E2E','#316395','#994499','#22AA99','#AAAA11','#6633CC','#E67300','#8B0707','#329262','#5574A6','#3B3EAC'];
-    config.data.labels = snapshotDates;
+    chartConfig.data.labels = snapshotDates;
     datasets = datasets.map(function(data,i){
        data.backgroundColor = default_colors[i];
        data.borderColor = default_colors[i];
@@ -62,6 +62,6 @@ function showSimilarityChart(snapshotDates, datasets){
        data.borderWidth = 1;
        return data;
     });
-    config.data.datasets = datasets;
-    window.myLine = new Chart(ctx, config);
+    chartConfig.data.datasets = datasets;
+    window.myLine = new Chart(ctx, chartConfig);
 }

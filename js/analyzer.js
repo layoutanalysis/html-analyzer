@@ -26,26 +26,49 @@ var Snapshot = Backbone.Model.extend({
         }
         return this.get(property) || [];
     },
-    calculateSimilarityToPrevious: function(){
-        var ownCssAttributes = _(this.getCSSProperties()).keys();
+    _resetCalculatedSimilarities: function(){
+        var self = this;
+        _(this.attributes).each(function(value, key){
+           var isCalculatedAttr = key.indexOf('-values') > - 1 || key.indexOf('-similarity') > - 1;
+           if (isCalculatedAttr){
+               self.unset(key);
+           }
+        });
+    },
+    calculateDiffToPrevious: function (properties){
+        var previous = this.getPreviousSnapshot();
+        var self = this;
+        if (previous) {
+            properties.forEach(function (prop) {
+                var previousValue = previous.get(prop) || [];
+                var ownValue = self.get(prop) || [];
+                self.set(prop + '-added-values', _.difference(ownValue, previousValue));
+                self.set(prop + '-common-values', _.intersection(ownValue, previousValue));
+                self.set(prop + '-removed-values', _.difference(previousValue, ownValue));
+            });
+        }
+    },
+    calculateSimilarityToPrevious: function(properties){
+
         var previous = this.getPreviousSnapshot();
 
         var self = this;
         var similarities = [];
+        var properties = properties;
 
         if (previous){
-            var previousCssAttributes = _(previous.getCSSProperties()).keys();
-            var unifiedAttributes = _.union(ownCssAttributes, previousCssAttributes);
-            _(unifiedAttributes).each(function(attr){
+            if (properties === undefined) {
+                var ownCssAttributes = _(this.getCSSProperties()).keys();
+                var previousCssAttributes = _(previous.getCSSProperties()).keys();
+                var unifiedAttributes = _.union(ownCssAttributes, previousCssAttributes);
+                properties = unifiedAttributes;
+            }
+            _(properties).each(function(attr){
                 var previousValue = previous.get(attr) || [];
                 var ownValue = self.get(attr) || [];
                 var similarity = self.getJaccardSimilarity(previousValue, ownValue);
                 self.set(attr + '-similarity', similarity);
                 similarities.push(similarity);
-
-                self.set(attr + '-added-values', _.difference(ownValue, previousValue));
-                self.set(attr + '-common-values', _.intersection(ownValue, previousValue));
-                self.set(attr + '-removed-values', _.difference(previousValue, ownValue));
             });
             self.set("avg-similarity",jStat.mean(similarities));
         }
@@ -110,10 +133,25 @@ var Snapshots = Backbone.Collection.extend({
         });
         return _.uniq(_.flatten(snapshotProperties)).sort();
     },
-    dissimilarInProperties: function (cssProperties){
+    _resetCalculatedSimilarities: function (){
+        this.each(function(snapshot){
+           snapshot._resetCalculatedSimilarities();
+        });
+    },
+    getDissimilarSnapshots: function (options){
+        var cssProperties = options.properties;
+        var threshold = options.sigmaThreshold;
+
         var prefixedProps = _(cssProperties).map(function(prop){
             return prop + '-similarity';
         });
+        this._resetCalculatedSimilarities();
+
+        //TODO: only calculate similarity for requested properties
+        this.each(function(snapshot){
+            snapshot.calculateSimilarityToPrevious();
+        });
+
 
         var getPropSimilarityBySnapshot = function(snapshot){
             var snapshotJSON = snapshot.toJSON();
@@ -140,80 +178,6 @@ var Snapshots = Backbone.Collection.extend({
 
 });
 
-var configFormTemplate = `
-  <form>
-        <div class="form-group row">
-            <label for="medium" class="col-sm-2 col-form-label">Medium</label>
-            <div class="col-sm-3">
-                <select name="medium" class="form-control form-control-sm">
-                    <option>Clarin</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-sm-2 col-form-label">CSS Properties</label>
-                <div class="col-sm-3">
-                <select id="properties" class="form-control form-control-sm" size="10" multiple="true">
-                    {{#cssProperties}}
-                    <option value="{{.}}">{{.}}</option>
-                    {{/cssProperties}}
-                </select>
-            </div>
-        </div>
-
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label" title="To be identified as a change candidate, a snapshot must be more dissimilar than 82% of the other snapshots">Similarity Threshold</label>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="number" id="similarity-threshold" value="82">%
-        </div>
-    </div>
-
-    <button type="button" class="btn btn-primary">Analyze</button>
-    <button type="button" class="btn btn-secondary">Reset</button>
-    <div style="width:1000px;">
-        <canvas id="canvas"></canvas>
-    </div>
-</form>
-`;
-
-
-var cssValueTemplates = {
-'base' : `
-    <div class="css-property-values {{cssProperty}}-values">
-    {{>cssValuesTemplate}}
-     </div>
-`,
-'color': `
-     {{#cssValues}}
-        <div title="{{.}}" style="width: 20px; height: 20px; margin-right: 5px; float:left; background-color: {{.}}"></div>
-    {{/cssValues}}
-    <br style="clear:both;">
-`,
-    'fontFamily': `
-      {{#cssValues}}
-            <span style="font-family: {{.}}; font-size: 16px;">{{.}}</span><br />
-      {{/cssValues}}
-`,
-    'dimension': `
-      <div style="width: 100%, height: 20px; border-bottom: 1px solid black;">
-      {{#cssValues}}
-            <div style="position: absolute;margin-left: {{.}}; width:1px; height:10px; background-color: red;" title="{{.}}">&nbsp;</div>
-      {{/cssValues}}
-      </div>
-      <br />
-      <p>
-      {{#cssValues}}
-           <span><small>{{.}}</small></span>
-      {{/cssValues}}
-      </p>
-`,
-'default': `
-      {{#cssValues}}
-            <span>{{.}}</span>
-      {{/cssValues}}
-`}
-
 
 var ResultTable = Backbone.View.extend({
     initialize: function (options){
@@ -229,99 +193,66 @@ var ResultTable = Backbone.View.extend({
     toggleResultDetails: function (evt ){
        jQuery(evt.target).siblings(".card-body").toggle();
     },
-    template: _.template(`
-        <br/><br/>
-        <h2>Results for <%= medium %></h2>
-        <p>Analyzed CSS Properties:
-            <% print (analyzedProperties.join(", ")); %>
-        </p>
-         <h4>
-            <% print (snapshots.length); %> Change Candidates detected
-        </h4>
-        <div class="card-columns" style="column-count:1;">
-         <% _.each(snapshots, function(changeSnapshot){ %>
-             <div class="card">
-              <h5 class="card-header"><% print(changeSnapshot.get("snapshotDate")); %>
-              <small class="text-muted" title="Average Similarity to Previous Snapshot"> Similarity: <% print((changeSnapshot.get("avg-similarity")*100).toFixed(2)); %> %</small>
-              <small class="text-muted"><a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">Previous</a> | <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">This</a> | <a href="<% print(changeSnapshot.getNextSnapshot().get("url")); %>" target="_blank">Next Snapshot</a></small>
-              </h5>
-              <div class="card-body" style="display:none;">
-                 <% _.each(analyzedProperties, function(prop){ %>
-                    <div class="card">
-                        <% var propSimilarity = changeSnapshot.get(prop + "-similarity"); %>
-                        <% //if (propSimilarity){ %>
-                            <h6 class="card-header"><% print(prop); %> <span class="text-muted font-weight-normal">Similarity: <% print ((propSimilarity*100).toFixed(2)); %></span></h6>
-                            <div class="card-body" style="display:none;">
-                            
-                                <% var addedPropValues = changeSnapshot.getValuesForProperty(prop, "added"); %>
-                                <% if (addedPropValues.length > 0){ %>
-                                    <p style="color: green;"><% print(addedPropValues.length); %> new values:
-                                        <div>                    
-                                            <% print (changeSnapshot.formatPropertyValue(prop, addedPropValues)); %>
-                                         <br style="clear:both;"/>
-                                         </div>
-                                    </p>
-                                <% } %>
-                                
-                                 <% var commonPropValues = changeSnapshot.getValuesForProperty(prop, "common"); %>
-                                <% if (commonPropValues.length > 0){ %>
-                                    <p style="color: black;"><% print(commonPropValues.length); %> common values in both snapshots:
-                                        <div>                    
-                                            <% print (changeSnapshot.formatPropertyValue(prop, commonPropValues)); %>
-                                         <br style="clear:both;"/>
-                                         </div>
-                                    </p>
-                                <% } %>
-                                
-                                <% var removedPropValues = changeSnapshot.getValuesForProperty(prop, "removed"); %>
-                                <% if (removedPropValues.length > 0){ %>
-                                    <p style="color: red;"><% print(removedPropValues.length); %> removed values:</p>
-                                        <div>
-                                         <% print (changeSnapshot.formatPropertyValue(prop, removedPropValues)); %>
-                                         <br style="clear:both;"/>
-                                        </div>
-                                    </p>
-                                <% } %>
-                                
-                            </div>
-                        <% //} %>
-                    </div>
-                 <% }); %>
-              </div>
-            </div>
-        <% }); %>
-        </div>
-    `),
+    template: _.template(resultTableTemplate),
     render: function() {
         this.$el.html(this.template(this.options));
         return this;
     }
 });
 
+var SNAPSHOT_CACHE = {};
 
-var clarinSnapshots = new Snapshots();
 
-clarinSnapshots.on("add", function(snapshot){
-   snapshot.calculateSimilarityToPrevious();
-});
-
-clarinSnapshots.on("sync", function(snapshots){
-    //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
-   document.getElementById('config-form').innerHTML = Mustache.to_html(configFormTemplate, {cssProperties: snapshots.getUsedCSSProperties()});
-   $('.btn-primary').click(function(e){
-       $('#results').empty();
-       var analyzedProperties = $('#properties').val();
-           //['font-family', 'color','width', 'height','margin-left','margin-right','background-color'];
-       var changeCandidates =  snapshots.dissimilarInProperties(analyzedProperties);
-
-        var snapshotDates = snapshots.pluck("snapshotDate").slice(1);
-        var datasets = analyzedProperties.map(function(prop){
-            return {data: snapshots.pluck(prop + '-similarity').slice(1), label: prop + "-similarity"}
+function loadSnapshotCollection (snapshotUrl, callback){
+    if (snapshotUrl in SNAPSHOT_CACHE){
+        callback(SNAPSHOT_CACHE[snapshotUrl]);
+    }
+    else {
+        var snapshotColl = new Snapshots();
+        SNAPSHOT_CACHE[snapshotUrl] = snapshotColl;
+        var jqXHR = snapshotColl.fetch({url: snapshotUrl});
+        jqXHR.done(function(){
+           callback(snapshotColl);
         });
-        showSimilarityChart(snapshotDates, datasets);
-        resultTable = new ResultTable({snapshots: changeCandidates, analyzedProperties: analyzedProperties, medium: 'Clarin.com'});
-        $("#results").append(resultTable.render().el);
-       e.preventDefault();
-   });
+    }
+}
+
+var medium = '';
+window.addEventListener('load', function(){
+    document.getElementById('config-form').innerHTML = Mustache.to_html(configFormTemplate, config);
+    $('.btn-primary').click(function(e){
+        $('#results').empty();
+        var jsonUrl = $('[name="medium"]').val();
+        medium =  $('[name="medium"] :selected').text();
+        loadSnapshotCollection(jsonUrl,collectionLoaded);
+        e.preventDefault();
+    });
 });
-clarinSnapshots.fetch();
+
+
+//clarinSnapshots.on("sync", function(snapshots){
+function collectionLoaded (snapshotColl) {
+    //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
+    console.time("analysis");
+    var analyzedProperties = $('#properties').val();
+    //['font-family', 'color','width', 'height','margin-left','margin-right','background-color'];
+    //var changeCandidates = snapshotColl.dissimilarInProperties(analyzedProperties);
+    var changeCandidates = snapshotColl.getDissimilarSnapshots({properties: analyzedProperties, sigmaThreshold: 0.82});
+    changeCandidates.forEach(snapshot => snapshot.calculateDiffToPrevious(analyzedProperties));
+
+    var snapshotDates = snapshotColl.pluck("snapshotDate").slice(1);
+    var datasets = analyzedProperties.map(function (prop) {
+        return {data: snapshotColl.pluck(prop + '-similarity').slice(1), label: prop + "-similarity"}
+    });
+    showSimilarityChart(snapshotDates, datasets);
+    resultTable = new ResultTable({
+        snapshots: changeCandidates,
+        analyzedProperties: analyzedProperties,
+        medium: medium
+    });
+    $("#results").append(resultTable.render().el);
+    console.timeEnd("analysis");
+}
+
+//});
+//
