@@ -5,7 +5,7 @@ Can be used to detect changes in CSS Usage for a certain website, e.g. for [hist
 
 Demo: https://layoutanalysis.github.io/html-analyzer/
 
-##TODO:
+## TODO:
 - rename into `css-stats-diff` (html-analyzer is a rather confusing name)
 - refactor into an offline report generator and integrate it into the cssstats toolchain. Idea:
 ```
