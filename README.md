@@ -7,7 +7,7 @@ Demo: https://layoutanalysis.github.io/html-analyzer/
 
 ## TODO:
 - rename into `css-stats-diff` (html-analyzer is a rather confusing name)
-- refactor into an offline report generator and integrate it into the cssstats toolchain. Idea:
+- refactor into an offline report generator and integrate it into the [get-css](https://github.com/cssstats/get-css)/[cssstats](https://github.com/cssstats/core) toolchain. Idea:
 ```
 > curl http://web.archive.org/cdx/search/cdx?url=www.yahoo.com&collapse=timestamp:6&from=2007&to=2016 > historic-yahoo-snapshots.txt
 # TODO: tranform .txt so that it actually contains the snapshot urls
