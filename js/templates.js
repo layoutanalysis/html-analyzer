@@ -41,7 +41,7 @@ var cssValueTemplates = {
             <% print (analyzedProperties.join(", ")); %>
         </p>
         <p>
-            Total number of Web Archive Snapshots: <%= totalNumberOfSnapshots %>
+            Total number of CSS Stats Reports in Collection: <%= totalNumberOfSnapshots %>
         </p>
          <h4>
             <% print (snapshots.length); %> Change Candidates detected
@@ -51,7 +51,7 @@ var cssValueTemplates = {
              <div class="card">
               <h5 class="card-header"><% print(changeSnapshot.get("snapshotDate")); %>
               <small class="text-muted" title="Average Similarity to Previous Snapshot"> Similarity: <% print((changeSnapshot.get("avg-similarity")*100).toFixed(2)); %> %</small>
-              <small class="text-muted" style="font-size: 12px;">between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this Snapshot</a> </small>
+              <small class="text-muted" style="font-size: 12px;">between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this website version</a> </small>
               </h5>
               <div class="card-body" style="display:none;">
                  <% _.each(analyzedProperties, function(prop){ %>
@@ -105,7 +105,7 @@ var cssValueTemplates = {
 var configFormTemplate = `
   <form>
         <div class="form-group row">
-            <label for="medium" class="col-sm-2 col-form-label">Medium</label>
+            <label for="medium" class="col-sm-2 col-form-label">CSS Stats Report Collection</label>
             <div class="col-sm-3">
                 <select name="medium" class="form-control form-control-sm">
                     {{#media}}
@@ -116,7 +116,7 @@ var configFormTemplate = `
         </div>
 
         <div class="form-group row">
-            <label class="col-sm-2 col-form-label" title="An">CSS Properties</label>
+            <label class="col-sm-2 col-form-label" title="An">Compare Values of CSS Properties</label>
                 <div class="col-sm-3">
                 <select id="properties" class="form-control form-control-sm" size="10" multiple="true">
                     {{#cssProperties}}
@@ -131,12 +131,12 @@ var configFormTemplate = `
         </div>
     <div class="form-group row">
         <label class="col-sm-2 col-form-label" title=" than 82% of the other snapshots">Similarity Threshold</label>
-        <div class="form-check form-check-inline">To be identified as a change candidate, a snapshot must be &nbsp;
-            <input class="form-check-input" type="number" id="similarity-threshold" min="0" max="50" value="32">% more dissimilar than the average snapshot.
+        <div class="form-check form-check-inline">To be identified as a change candidate, a report must be &nbsp;
+            <input class="form-check-input" disabled="disabled" type="number" id="similarity-threshold" min="0" max="50" value="32">% more dissimilar than the average report.
         </div>
     </div>
 
-    <button type="button" class="btn btn-primary">Analyze</button>
+    <button type="button" class="btn btn-primary">Compare</button>
     <button type="button" class="btn btn-secondary">Reset</button>
     <div style="width:1000px;">
         <canvas id="canvas"></canvas>

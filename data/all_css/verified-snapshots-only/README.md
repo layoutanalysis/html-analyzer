@@ -1,0 +1,3 @@
+The JSON files in this directory only contain cssstats statistics for snapshots whose integrity has been verified in two ways:
+- Snapshot were obtained by [Wayback Machines' CDX API](https://github.com/internetarchive/wayback/tree/master/wayback-cdx-server) to make sure they were proberly indexed and contain no redirects (i.e. statuscode must be 200)
+- During the [get-css](https://github.com/cssstats/get-css) download of the snapshot stylesheets, the [get-css links Array](https://github.com/cssstats/get-css#links) was checked for download errors. Only stylesheets without errors were included.

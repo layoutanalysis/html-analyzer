@@ -94,7 +94,7 @@ var Snapshot = Backbone.Model.extend({
     },
     parse: function (data, options){
         var attributes = {};
-        var cssProps = data.declarations.properties;
+        var cssProps = data.declarations ? data.declarations.properties: data;
         var cssWithoutVendorProperties = _.omit(cssProps,function(value,prop){
            return prop.startsWith('-');
         });
