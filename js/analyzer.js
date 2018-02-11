@@ -140,7 +140,13 @@ var Snapshots = Backbone.Collection.extend({
     },
     getDissimilarSnapshots: function (options){
         var cssProperties = options.properties;
-        var threshold = options.sigmaThreshold;
+        var method = options.method;
+        var threshold = options.threshold / 100;
+
+        //use hardcoded 2sigma stddev for now.
+        if (options.method === "stddev") {
+            threshold = 0.82;
+        }
 
         var prefixedProps = _(cssProperties).map(function(prop){
             return prop + '-similarity';
@@ -149,7 +155,7 @@ var Snapshots = Backbone.Collection.extend({
 
         //TODO: only calculate similarity for requested properties
         this.each(function(snapshot){
-            snapshot.calculateSimilarityToPrevious();
+            snapshot.calculateSimilarityToPrevious(cssProperties );
         });
 
 
@@ -164,15 +170,21 @@ var Snapshots = Backbone.Collection.extend({
             return jStat.mean(propSims);
         }
 
-        var avgPropsSimilarities = this.map(getPropSimilarityBySnapshot);
+        if (method === "stddev") {
+            var avgPropsSimilarities = this.map(getPropSimilarityBySnapshot);
 
-        avgPropsSimilarities = _.compact(avgPropsSimilarities);
-        var avgSimilarities = jStat.mean(avgPropsSimilarities);
-        var stdDevSimilarities = jStat.stdev(avgPropsSimilarities, true);
+            avgPropsSimilarities = _.compact(avgPropsSimilarities);
+            var avgSimilarities = jStat.mean(avgPropsSimilarities);
+            var stdDevSimilarities = jStat.stdev(avgPropsSimilarities, true);
+            return this.filter(function(snapshot){
+                var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
+                return _.isNumber(snapshotSimilarity) && (snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
+            });
+        }
 
         return this.filter(function(snapshot){
             var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
-            return _.isNumber(snapshotSimilarity) && (snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
+            return _.isNumber(snapshotSimilarity) && (snapshotSimilarity <= threshold);
         });
     },
 
@@ -227,6 +239,13 @@ window.addEventListener('load', function(){
         loadSnapshotCollection(jsonUrl,collectionLoaded);
         e.preventDefault();
     });
+
+    //hardcode threshold to 34% (-1sigma) when choosing standard deviation
+    $('#similarity-method').change(function(){
+        var isStdDev =  $(this).val() === "stddev";
+        $('#similarity-threshold').prop('disabled', isStdDev);
+        $('#similarity-threshold').val(isStdDev ? 34:  $('#similarity-threshold').val());
+    })
 });
 
 
@@ -235,15 +254,24 @@ function collectionLoaded (snapshotColl) {
     //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
     console.time("analysis");
     var analyzedProperties = $('#properties').val();
+    var similarityMethod = $('#similarity-method').val();
+    var similarityThreshold = parseInt($('#similarity-threshold').val(),10);
     //['font-family', 'color','width', 'height','margin-left','margin-right','background-color'];
     //var changeCandidates = snapshotColl.dissimilarInProperties(analyzedProperties);
-    var changeCandidates = snapshotColl.getDissimilarSnapshots({properties: analyzedProperties, sigmaThreshold: 0.82});
+    var changeCandidates = snapshotColl.getDissimilarSnapshots({properties: analyzedProperties, method: similarityMethod, threshold: similarityThreshold});
     changeCandidates.forEach(snapshot => snapshot.calculateDiffToPrevious(analyzedProperties));
 
     var snapshotDates = snapshotColl.pluck("snapshotDate").slice(1);
     var datasets = analyzedProperties.map(function (prop) {
         return {data: snapshotColl.pluck(prop + '-similarity').slice(1), label: prop + "-similarity"}
     });
+
+    if ($('[name="sort"]:checked').val()=== "similarity") {
+        changeCandidates.sort(function (a, b) {
+            return a.get('avg-similarity') - b.get('avg-similarity');
+        });
+    }
+
     showSimilarityChart(snapshotDates, datasets);
     resultTable = new ResultTable({
         snapshots: changeCandidates,

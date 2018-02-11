@@ -131,8 +131,19 @@ var configFormTemplate = `
         </div>
     <div class="form-group row">
         <label class="col-sm-2 col-form-label" title=" than 82% of the other snapshots">Similarity Threshold</label>
-        <div class="form-check form-check-inline">To be identified as a change candidate, a report must be &nbsp;
-            <input class="form-check-input" disabled="disabled" type="number" id="similarity-threshold" min="0" max="50" value="32">% more dissimilar than the average report.
+        <div class="form-check form-check-inline">To be identified as a change candidate, a report must have &nbsp;
+            <input class="form-check-input" disabled="disabled" type="number" id="similarity-threshold" min="0" max="50" value="34">% or less similarity &nbsp; 
+            <select id="similarity-method">
+                <option value="stddev">than the average report</option>
+                <option value="absolute">to its previous report</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label" title=" than 82% of the other snapshots">Sort Change Candidates by</label>
+        <div class="form-check form-check-inline">
+        <label><input type="radio" name="sort" value="snapshotDate" checked>Snapshot Date</label> &nbsp;
+        <label><input type="radio" name="sort" value="similarity"> Similarity (descending)</label>
         </div>
     </div>
 
