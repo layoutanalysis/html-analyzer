@@ -49,7 +49,8 @@ var cssValueTemplates = {
         <div class="card-columns" style="column-count:1;">
          <% _.each(snapshots, function(changeSnapshot){ %>
              <div class="card">
-              <h5 class="card-header"><% print(changeSnapshot.get("snapshotDate")); %>
+             <% var sDate = changeSnapshot.get("snapshotDate"); %>
+              <h5 class="card-header"><% print([sDate.slice(0,4), sDate.slice(4,6), sDate.slice(6,8)].join('-')); %>
               <small class="text-muted" title="Average Similarity to Previous Snapshot"> Similarity: <% print((changeSnapshot.get("avg-similarity")*100).toFixed(2)); %> %</small>
               <small class="text-muted" style="font-size: 12px;">between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this website version</a> </small>
               </h5>
