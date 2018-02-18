@@ -74,7 +74,15 @@ var Snapshot = Backbone.Model.extend({
         }
     },
     getJaccardSimilarity: function (arr1, arr2){
-        return (_.intersection(arr1,arr2).length / _.union(arr1, arr2).length) || 0;
+        var intersection = _.intersection(arr1,arr2).length;
+        var union = _.union(arr1, arr2).length;
+
+        //special case: both arrays are empty, but 100% similar
+        if (intersection === 0 && union === 0){
+            return 1;
+        }
+
+        return (intersection / union)  || 0;
     },
     formatPropertyValue: function(cssProperty, cssValues){
         var valueTemplate = 'default';
