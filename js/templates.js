@@ -143,8 +143,8 @@ var configFormTemplate = `
     <div class="form-group row">
         <label class="col-sm-2 col-form-label" title=" than 82% of the other snapshots">Sort Change Candidates by</label>
         <div class="form-check form-check-inline">
-        <label><input type="radio" name="sort" value="snapshotDate" checked>Snapshot Date</label> &nbsp;
-        <label><input type="radio" name="sort" value="similarity"> Similarity (descending)</label>
+        <label><input type="radio" name="sort" value="snapshotDate">Snapshot Date</label> &nbsp;
+        <label><input type="radio" name="sort" value="similarity" checked> Similarity (ascending)</label>
         </div>
     </div>
 
