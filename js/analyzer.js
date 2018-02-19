@@ -186,6 +186,8 @@ var Snapshots = Backbone.Collection.extend({
             var stdDevSimilarities = jStat.stdev(avgPropsSimilarities, true);
             return this.filter(function(snapshot){
                 var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
+                snapshot.set('_is1Sigma', snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
+                snapshot.set('_is2Sigma', snapshotSimilarity < (avgSimilarities - 2*stdDevSimilarities));
                 return _.isNumber(snapshotSimilarity) && (snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
             });
         }
@@ -248,7 +250,7 @@ window.addEventListener('load', function(){
         e.preventDefault();
     });
 
-    //hardcode threshold to 34% (-1sigma) when choosing standard deviation
+    //hardcode threshold to 45% (-2sigma) when choosing standard deviation
     $('#similarity-method').change(function(){
         var isStdDev =  $(this).val() === "stddev";
         $('#similarity-threshold').prop('disabled', isStdDev);

@@ -48,15 +48,17 @@ var cssValueTemplates = {
         </h4>
         <div class="card-columns" style="column-count:1;">
          <% _.each(snapshots, function(changeSnapshot){ %>
-             <div class="card">
+              <% var cardClass = changeSnapshot.get("_is2Sigma") ? 'text-white bg-dark': ''; %>
+              <% var changeMessage = changeSnapshot.get("_is2Sigma") ? 'heavy change (at least 45% more different than average)': 'moderate change (at least 34% more different than average)'; %>
+             <div class="card <%= cardClass %>">
              <% var sDate = changeSnapshot.get("snapshotDate"); %>
-              <h5 class="card-header"><% print([sDate.slice(0,4), sDate.slice(4,6), sDate.slice(6,8)].join('-')); %>
+              <h5 class="card-header" title="<%= changeMessage %>" style="cursor:pointer;"><% print([sDate.slice(0,4), sDate.slice(4,6), sDate.slice(6,8)].join('-')); %>
               <small class="text-muted" title="Average Similarity to Previous Snapshot"> Similarity: <% print((changeSnapshot.get("avg-similarity")*100).toFixed(2)); %> %</small>
               <small class="text-muted" style="font-size: 12px;">between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this website version</a> </small>
               </h5>
               <div class="card-body" style="display:none;">
                  <% _.each(analyzedProperties, function(prop){ %>
-                    <div class="card">
+                    <div class="card <%= cardClass %>">
                         <% var propSimilarity = changeSnapshot.get(prop + "-similarity"); %>
                         <% //if (propSimilarity){ %>
                             <h6 class="card-header"><% print(prop); %> <span class="text-muted font-weight-normal">Similarity: <% print ((propSimilarity*100).toFixed(2)); %></span></h6>
