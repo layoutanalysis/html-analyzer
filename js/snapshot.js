@@ -9,9 +9,9 @@ var Snapshot = Backbone.Model.extend({
         }
     },
     getCSSProperties: function (){
-      return _(this.attributes).omit(function(value, key){
-         return (key.indexOf("-similarity") > -1 || key.indexOf("-value") > -1 || key.indexOf("snapshotDate") > -1 || key === "url")
-      });
+        return _(this.attributes).omit(function(value, key){
+            return (key.indexOf("-similarity") > -1 || key.indexOf("-value") > -1 || key.indexOf("snapshotDate") > -1 || key === "url")
+        });
     },
     getPreviousSnapshot: function (){
         var ownIndex = this.collection.indexOf(this);
@@ -29,10 +29,10 @@ var Snapshot = Backbone.Model.extend({
     _resetCalculatedSimilarities: function(){
         var self = this;
         _(this.attributes).each(function(value, key){
-           var isCalculatedAttr = key.indexOf('-values') > - 1 || key.indexOf('-similarity') > - 1;
-           if (isCalculatedAttr){
-               self.unset(key);
-           }
+            var isCalculatedAttr = key.indexOf('-values') > - 1 || key.indexOf('-similarity') > - 1;
+            if (isCalculatedAttr){
+                self.unset(key);
+            }
         });
     },
     calculateDiffToPrevious: function (properties){
@@ -100,16 +100,21 @@ var Snapshot = Backbone.Model.extend({
 
         return Mustache.to_html(cssValueTemplates['base'], {cssProperty: cssProperty, cssValues: cssValues}, {cssValuesTemplate: cssValueTemplates[valueTemplate]});
     },
+    getDateString: function (){
+        // return snapshot date in the format YYYY-MM-DD
+        var sDate = this.get('snapshotDate');
+        return ([sDate.slice(0,4), sDate.slice(4,6), sDate.slice(6,8)].join('-'));
+    },
     parse: function (data, options){
         var attributes = {};
         var cssProps = data.declarations ? data.declarations.properties: data;
         var cssWithoutVendorProperties = _.omit(cssProps,function(value,prop){
-           return prop.startsWith('-');
+            return prop.startsWith('-');
         });
 
         //no duplicate values
         cssWithoutVendorProperties = _.mapObject(cssWithoutVendorProperties, function(value, prop){
-           return _.uniq(value);
+            return _.uniq(value);
         });
 
         _.extend(attributes, cssWithoutVendorProperties);
@@ -135,15 +140,25 @@ var Snapshots = Backbone.Collection.extend({
             return _.isNumber(snapshotSimilarity) && (snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
         });
     },
+    getAnalyzedProperties: function (){
+        return this.at(0).keys().filter(function(attr){
+            return attr.endsWith("-similarity");
+        });
+    },
+    getCollectionSource: function (){
+        // returns url of collection datasource
+        // even if collection was instantiated with filtered models
+        return this.at(0).collection.url;
+    },
     getUsedCSSProperties: function (){
         var snapshotProperties = this.map(function(snapshot){
-           return _(snapshot.getCSSProperties()).keys();
+            return _(snapshot.getCSSProperties()).keys();
         });
         return _.uniq(_.flatten(snapshotProperties)).sort();
     },
     _resetCalculatedSimilarities: function (){
         this.each(function(snapshot){
-           snapshot._resetCalculatedSimilarities();
+            snapshot._resetCalculatedSimilarities();
         });
     },
     getDissimilarSnapshots: function (options){
@@ -178,120 +193,29 @@ var Snapshots = Backbone.Collection.extend({
             return jStat.mean(propSims);
         }
 
+        var changeCandidates;
+
         if (method === "stddev") {
             var avgPropsSimilarities = this.map(getPropSimilarityBySnapshot);
 
             avgPropsSimilarities = _.compact(avgPropsSimilarities);
             var avgSimilarities = jStat.mean(avgPropsSimilarities);
             var stdDevSimilarities = jStat.stdev(avgPropsSimilarities, true);
-            return this.filter(function(snapshot){
+            changeCandidates = this.filter(function(snapshot){
                 var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
                 snapshot.set('_is1Sigma', snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
                 snapshot.set('_is2Sigma', snapshotSimilarity < (avgSimilarities - 2*stdDevSimilarities));
                 return _.isNumber(snapshotSimilarity) && (snapshotSimilarity < (avgSimilarities - stdDevSimilarities));
             });
         }
+        else {
+            changeCandidates = this.filter(function(snapshot){
+                var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
+                return _.isNumber(snapshotSimilarity) && (snapshotSimilarity <= threshold);
+            });
+        }
 
-        return this.filter(function(snapshot){
-            var snapshotSimilarity =  getPropSimilarityBySnapshot(snapshot);
-            return _.isNumber(snapshotSimilarity) && (snapshotSimilarity <= threshold);
-        });
+        return new Snapshots(changeCandidates);
     },
 
 });
-
-
-var ResultTable = Backbone.View.extend({
-    initialize: function (options){
-        this.options = options;
-    },
-    events: {
-      "click .card-header": "toggleResultDetails"
-    },
-    cssValueTemplate: _.template(`
-        <div class="css-property-values <%= property %>-values">
-          Detail Template
-        </div>`),
-    toggleResultDetails: function (evt ){
-       jQuery(evt.target).siblings(".card-body").toggle();
-    },
-    template: _.template(resultTableTemplate),
-    render: function() {
-        this.$el.html(this.template(this.options));
-        return this;
-    }
-});
-
-var SNAPSHOT_CACHE = {};
-
-
-function loadSnapshotCollection (snapshotUrl, callback){
-    if (snapshotUrl in SNAPSHOT_CACHE){
-        callback(SNAPSHOT_CACHE[snapshotUrl]);
-    }
-    else {
-        var snapshotColl = new Snapshots();
-        SNAPSHOT_CACHE[snapshotUrl] = snapshotColl;
-        var jqXHR = snapshotColl.fetch({url: snapshotUrl});
-        jqXHR.done(function(){
-           callback(snapshotColl);
-        });
-    }
-}
-
-var medium = '';
-window.addEventListener('load', function(){
-    document.getElementById('config-form').innerHTML = Mustache.to_html(configFormTemplate, config);
-    $('.btn-primary').click(function(e){
-        $('#results').empty();
-        var jsonUrl = $('[name="medium"]').val();
-        medium =  $('[name="medium"] :selected').text();
-        loadSnapshotCollection(jsonUrl,collectionLoaded);
-        e.preventDefault();
-    });
-
-    //hardcode threshold to 45% (-2sigma) when choosing standard deviation
-    $('#similarity-method').change(function(){
-        var isStdDev =  $(this).val() === "stddev";
-        $('#similarity-threshold').prop('disabled', isStdDev);
-        $('#similarity-threshold').val(isStdDev ? 34:  $('#similarity-threshold').val());
-    })
-});
-
-
-//clarinSnapshots.on("sync", function(snapshots){
-function collectionLoaded (snapshotColl) {
-    //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
-    console.time("analysis");
-    var analyzedProperties = $('#properties').val();
-    var similarityMethod = $('#similarity-method').val();
-    var similarityThreshold = parseInt($('#similarity-threshold').val(),10);
-    //['font-family', 'color','width', 'height','margin-left','margin-right','background-color'];
-    //var changeCandidates = snapshotColl.dissimilarInProperties(analyzedProperties);
-    var changeCandidates = snapshotColl.getDissimilarSnapshots({properties: analyzedProperties, method: similarityMethod, threshold: similarityThreshold});
-    changeCandidates.forEach(snapshot => snapshot.calculateDiffToPrevious(analyzedProperties));
-
-    var snapshotDates = snapshotColl.pluck("snapshotDate").slice(1);
-    var datasets = analyzedProperties.map(function (prop) {
-        return {data: snapshotColl.pluck(prop + '-similarity').slice(1), label: prop + "-similarity"}
-    });
-
-    if ($('[name="sort"]:checked').val()=== "similarity") {
-        changeCandidates.sort(function (a, b) {
-            return a.get('avg-similarity') - b.get('avg-similarity');
-        });
-    }
-
-    showSimilarityChart(snapshotDates, datasets);
-    resultTable = new ResultTable({
-        snapshots: changeCandidates,
-        analyzedProperties: analyzedProperties,
-        totalNumberOfSnapshots: snapshotColl.length,
-        medium: medium
-    });
-    $("#results").append(resultTable.render().el);
-    console.timeEnd("analysis");
-}
-
-//});
-//

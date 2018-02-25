@@ -38,21 +38,20 @@ var cssValueTemplates = {
         <br/><br/>
         <h2>Results for <%= medium %></h2>
         <p>Analyzed CSS Properties:
-            <% print (analyzedProperties.join(", ")); %>
+            <% print (snapshots.getAnalyzedProperties().join(", ")); %>
         </p>
         <p>
             Total number of CSS Stats Reports in Collection: <%= totalNumberOfSnapshots %>
         </p>
          <h4>
-            <% print (snapshots.length); %> Change Candidates detected
+            <span><% print (snapshots.length); %> Change Candidates detected</span> <span style="position:absolute; right:10px; margin-top:-10px;"><button type="button" onClick="downloadCSV();" class="btn btn-primary">CSV Download</button></span>
         </h4>
         <div class="card-columns" style="column-count:1;">
-         <% _.each(snapshots, function(changeSnapshot){ %>
+         <% snapshots.each(function(changeSnapshot){ %>
               <% var cardClass = changeSnapshot.get("_is2Sigma") ? 'text-white bg-dark': ''; %>
               <% var changeMessage = changeSnapshot.get("_is2Sigma") ? 'heavy change (at least 45% more different than average)': 'moderate change (at least 34% more different than average)'; %>
              <div class="card <%= cardClass %>">
-             <% var sDate = changeSnapshot.get("snapshotDate"); %>
-              <h5 class="card-header" title="<%= changeMessage %>" style="cursor:pointer;"><% print([sDate.slice(0,4), sDate.slice(4,6), sDate.slice(6,8)].join('-')); %>
+              <h5 class="card-header" title="<%= changeMessage %>" style="cursor:pointer;"><% print(changeSnapshot.getDateString()); %>
               <small class="text-muted" title="Average Similarity to Previous Snapshot"> Similarity: <% print((changeSnapshot.get("avg-similarity")*100).toFixed(2)); %> %</small>
               <small class="text-muted" style="font-size: 12px;">between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this website version</a> </small>
               </h5>
