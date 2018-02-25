@@ -5,7 +5,6 @@ var config = {
         {name:"El Pais", jsonFile:"data/all_css/elpais.2007-2017.json"},
         {name:"El Universal", jsonFile:"data/all_css/eluniversal.2007-2017.json"},
         {name:"Guardian", jsonFile:"data/all_css/guardian.2007-2017.json"},
-        {name:"Guardian (verified snapshots only)", jsonFile:"data/all_css/verified-snapshots-only/guardian.json"},
         {name:"New York Times", jsonFile:"data/all_css/nytimes.2007-2017.json"},
         {name:"O Globo", jsonFile:"data/all_css/oglobo.2007-2017.json"},
         {name:"Repubblica", jsonFile:"data/all_css/repubblica.2007-2017.json"},
