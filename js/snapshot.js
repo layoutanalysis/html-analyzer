@@ -40,8 +40,11 @@ var Snapshot = Backbone.Model.extend({
         var self = this;
         if (previous) {
             properties.forEach(function (prop) {
-                var previousValue = previous.get(prop) || [];
-                var ownValue = self.get(prop) || [];
+                //use converted props for comparison, if available
+                var convertedProp = prop + "-converted";
+               
+                var previousValue = previous.get(convertedProp) || previous.get(prop) || [];
+                var ownValue =  self.get(convertedProp) || self.get(prop) || [];
                 self.set(prop + '-added-values', _.difference(ownValue, previousValue));
                 self.set(prop + '-common-values', _.intersection(ownValue, previousValue));
                 self.set(prop + '-removed-values', _.difference(previousValue, ownValue));
@@ -66,6 +69,13 @@ var Snapshot = Backbone.Model.extend({
             _(properties).each(function(attr){
                 var previousValue = previous.get(attr) || [];
                 var ownValue = self.get(attr) || [];
+
+                //TODO: hide autoconvertion behind an UI option
+                previousValue = self.convertPropertyValues(attr,previousValue);
+                ownValue = self.convertPropertyValues(attr, ownValue);
+                self.set(attr + "-converted", ownValue);
+                previous.set(attr + "-converted", previousValue);
+
                 var similarity = self.getJaccardSimilarity(previousValue, ownValue);
                 self.set(attr + '-similarity', similarity);
                 similarities.push(similarity);
@@ -83,6 +93,25 @@ var Snapshot = Backbone.Model.extend({
         }
 
         return (intersection / union)  || 0;
+    },
+    convertPropertyValues: function (cssProperty, cssValues){
+
+        var conv = converters.find(function (converter){
+            return converter.properties.indexOf(cssProperty) > -1
+        });
+
+        cssValues = cssValues.filter(function(val){
+            return val !== undefined && val !== null && val !== NaN
+        });
+
+        if (conv){
+            convertedValues = cssValues.map(function (value, idx, array){
+                return conv.converter(value,cssProperty, idx, array);
+            });
+            return _.uniq(_.compact(convertedValues));
+        }
+
+        return cssValues;
     },
     formatPropertyValue: function(cssProperty, cssValues){
         var valueTemplate = 'default';

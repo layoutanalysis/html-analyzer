@@ -10,6 +10,7 @@ var config = {
         {name:"Repubblica", jsonFile:"data/all_css/repubblica.2007-2017.json"},
         {name:"Sueddeutsche Zeitung", jsonFile:"data/all_css/sz.2007-2017.json"},
         {name:"Le Figaro", jsonFile:"data/all_css/lefigaro.2007-2017.json"},
+        {name:"Le Figaro (used CSS only)", jsonFile:"data/all_css/lefigaro.2007-2017.used.json"},
 
     ],
     'cssProperties':[
