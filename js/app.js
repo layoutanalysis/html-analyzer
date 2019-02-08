@@ -103,11 +103,23 @@ function downloadCSV (){
 function collectionLoaded (snapshotColl) {
     //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
     console.time("analysis");
-    var analyzedProperties = $('#properties').val();
+    var analyzedProperties;
+    var compareAllProperties = $('#compare_all_props').is(':checked');
+
+    if (compareAllProperties == true) {
+        analyzedProperties = snapshotColl.getUsedCSSProperties();
+    }
+    else {
+        var analyzedProperties = $('#properties').val();
+    }
+    
     var similarityMethod = $('#similarity-method').val();
     var similarityThreshold = parseInt($('#similarity-threshold').val(),10);
     //['font-family', 'color','width', 'height','margin-left','margin-right','background-color'];
     //var changeCandidates = snapshotColl.dissimilarInProperties(analyzedProperties);
+    if (analyzedProperties.length === 0){
+        
+    }
     changeCandidates = snapshotColl.getDissimilarSnapshots({properties: analyzedProperties, method: similarityMethod, threshold: similarityThreshold});
     changeCandidates.each(snapshot => snapshot.calculateDiffToPrevious(analyzedProperties));
 
@@ -124,6 +136,7 @@ function collectionLoaded (snapshotColl) {
     showSimilarityChart(snapshotDates, datasets);
     resultTable = new ResultTable({
         snapshots: changeCandidates,
+        compareAllProperties: compareAllProperties,
         analyzedProperties: analyzedProperties,
         totalNumberOfSnapshots: snapshotColl.length,
         medium: medium

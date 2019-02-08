@@ -118,6 +118,15 @@ var configFormTemplate = `
         </div>
 
         <div class="form-group row">
+        <label class="col-sm-2 col-form-label" title="An">Comparison Method</label>
+            <div class="col-sm-3">
+            <input class="form-check-input" type="checkbox" value="" id="compare_all_props" checked>
+            <label class="form-check-label" for="compare_all_props">
+              Compare values of all CSS properties
+            </label>
+        </div>
+    </div>
+        <div class="form-group row" style="display:none;">
             <label class="col-sm-2 col-form-label" title="An">Compare Values of CSS Properties</label>
                 <div class="col-sm-3">
                 <select id="properties" class="form-control form-control-sm" size="10" multiple="true">

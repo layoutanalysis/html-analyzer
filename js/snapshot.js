@@ -151,10 +151,13 @@ var Snapshots = Backbone.Collection.extend({
         return this.at(0).collection.url;
     },
     getUsedCSSProperties: function (){
+        var mostCommonCSSProperties = "background background-attachment background-color background-image background-position background-repeat border border-bottom border-bottom-color border-bottom-style border-bottom-width border-color border-left border-left-color border-left-style border-left-width border-right border-right-color border-right-style border-right-width border-style border-top border-top-color border-top-style border-top-width border-width clear clip color cursor display filter float font font-family font-size font-variant font-weight height left letter-spacing line-height list-style list-style-image list-style-position list-style-type margin margin-bottom margin-left margin-right margin-top overflow padding padding-bottom padding-left padding-right padding-top page-break-after page-break-before position stroke-dasharray stroke-dashoffset stroke-width text-align text-decoration text-indent text-transform top vertical-align visibility width z-index".split(" ");
         var snapshotProperties = this.map(function(snapshot){
             return _(snapshot.getCSSProperties()).keys();
         });
-        return _.uniq(_.flatten(snapshotProperties)).sort();
+        var usedProps =  _.uniq(_.flatten(snapshotProperties)).sort();
+        var filteredUsedProps = _.intersection(mostCommonCSSProperties, usedProps); //filter properties to avoid mistyped or vendor-specific css properties.
+        return filteredUsedProps;
     },
     _resetCalculatedSimilarities: function (){
         this.each(function(snapshot){
@@ -171,6 +174,11 @@ var Snapshots = Backbone.Collection.extend({
             threshold = 0.82;
         }
 
+        //no properties were selected, we use all properties
+        if (cssProperties.length === 0){
+            cssProperties = this.getUsedCSSProperties();
+        }
+
         var prefixedProps = _(cssProperties).map(function(prop){
             return prop + '-similarity';
         });
@@ -178,7 +186,7 @@ var Snapshots = Backbone.Collection.extend({
 
         //TODO: only calculate similarity for requested properties
         this.each(function(snapshot){
-            snapshot.calculateSimilarityToPrevious(cssProperties );
+            snapshot.calculateSimilarityToPrevious(cssProperties);
         });
 
 
