@@ -47,6 +47,10 @@ window.addEventListener('load', function(){
         e.preventDefault();
     });
 
+    config.preselectedProperties.forEach(function(prop){
+        document.getElementById(prop).checked=true;
+    })
+
     //hardcode threshold to 45% (-2sigma) when choosing standard deviation
     $('#similarity-method').change(function(){
         var isStdDev =  $(this).val() === "stddev";
@@ -103,14 +107,10 @@ function downloadCSV (){
 function collectionLoaded (snapshotColl) {
     //console.log("Dissimilar Snapshots by CSS Property Font Family",collection.dissimilarByProperty('font-family'));
     console.time("analysis");
-    var analyzedProperties;
-    var compareAllProperties = $('#compare_all_props').is(':checked');
+    var analyzedProperties = [].map.call(document.querySelectorAll('table :checked'), function(cb){return cb.id});
 
-    if (compareAllProperties == true) {
-        analyzedProperties = snapshotColl.getUsedCSSProperties();
-    }
-    else {
-        var analyzedProperties = $('#properties').val();
+    if (analyzedProperties.length === 0){
+        return alert("Please choose at least one CSS Property for Comparison");
     }
     
     var similarityMethod = $('#similarity-method').val();
@@ -136,7 +136,7 @@ function collectionLoaded (snapshotColl) {
     showSimilarityChart(snapshotDates, datasets);
     resultTable = new ResultTable({
         snapshots: changeCandidates,
-        compareAllProperties: compareAllProperties,
+       // compareAllProperties: compareAllProperties,
         analyzedProperties: analyzedProperties,
         totalNumberOfSnapshots: snapshotColl.length,
         medium: medium

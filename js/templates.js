@@ -37,9 +37,7 @@ var cssValueTemplates = {
  var resultTableTemplate =   `
         <br/><br/>
         <h2>Results for <%= medium %></h2>
-        <p>Analyzed CSS Properties:
-            <% print (snapshots.getAnalyzedProperties().join(", ")); %>
-        </p>
+        <p><% print (snapshots.getAnalyzedProperties().length); %> compared CSS Properties</p>
         <p>
             Total number of CSS Stats Reports in Collection: <%= totalNumberOfSnapshots %>
         </p>
@@ -59,42 +57,67 @@ var cssValueTemplates = {
                  <% _.each(analyzedProperties, function(prop){ %>
                     <div class="card <%= cardClass %>">
                         <% var propSimilarity = changeSnapshot.get(prop + "-similarity"); %>
-                        <% //if (propSimilarity){ %>
+                        <% if (propSimilarity < 1){ %>
                             <h6 class="card-header"><% print(prop); %> <span class="text-muted font-weight-normal">Similarity: <% print ((propSimilarity*100).toFixed(2)); %></span></h6>
                             <div class="card-body" style="display:none;">
                                 <h6><span class="text-muted">Value Comparison between this and the previous snapshot</span></h6>
-                                <% var addedPropValues = changeSnapshot.getValuesForProperty(prop, "added"); %>
-                                <% if (addedPropValues.length > 0){ %>
-                                    <div class="added-values"><% print(addedPropValues.length); %> values only in this snapshot:
-                                        <div>                    
-                                            <% print (changeSnapshot.formatPropertyValue(prop, addedPropValues)); %>
-                                         <br style="clear:both;"/>
-                                         </div>
-                                    </div>
-                                <% } %>
-                                
-                                 <% var commonPropValues = changeSnapshot.getValuesForProperty(prop, "common"); %>
-                                <% if (commonPropValues.length > 0){ %>
-                                    <div class="common-values"><% print(commonPropValues.length); %> values in both snapshots:
-                                        <div>                    
-                                            <% print (changeSnapshot.formatPropertyValue(prop, commonPropValues)); %>
-                                         <br style="clear:both;"/>
-                                         </div>
-                                    </div>
-                                <% } %>
-                                
+
                                 <% var removedPropValues = changeSnapshot.getValuesForProperty(prop, "removed"); %>
-                                <% if (removedPropValues.length > 0){ %>
-                                    <div class="removed-values"><% print(removedPropValues.length); %> values only in the previous snapshot:
-                                        <div>
-                                         <% print (changeSnapshot.formatPropertyValue(prop, removedPropValues)); %>
-                                         <br style="clear:both;"/>
-                                        </div>
-                                    </div>
-                                <% } %>
+                                <% var commonPropValues = changeSnapshot.getValuesForProperty(prop, "common"); %>
+                                <% var addedPropValues = changeSnapshot.getValuesForProperty(prop, "added"); %>
+
+                                <table class="table">
+                                <thead>
+                                    <td> <span class="removed-values" alt="values that were present in the previous snapshot, but not in the current one"><%= removedPropValues.length %> removed Values</span> </td>
+                                    <td><span class="shared-values"><%= commonPropValues.length %> shared values</span></td>
+                                    <td><span class="added-values"><%= addedPropValues.length %> added values</span></td>
+                                </thead>
+                                <tbody>
+                                    <td>
+                                        
+                                        <% if (removedPropValues.length > 0){ %>
+                                            <div class="removed-values">
+                                                <div>
+                                                <% print (changeSnapshot.formatPropertyValue(prop, removedPropValues)); %>
+                                                <br style="clear:both;"/>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                   
+                                    </td>
+
+                                    <td>
+                                        
+                                        <% if (commonPropValues.length > 0){ %>
+                                                <div class="shared-values">                    
+                                                    <% print (changeSnapshot.formatPropertyValue(prop, commonPropValues)); %>
+                                                <br style="clear:both;"/>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </td>
+
+                                    <td>
+                                        
+                                        <% if (addedPropValues.length > 0){ %>
+                                                <div class="added-values">                    
+                                                    <% print (changeSnapshot.formatPropertyValue(prop, addedPropValues)); %>
+                                                <br style="clear:both;"/>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </td>
+
+                                </tbody>
+                                </table>
+                               
+                                
+                                
+                                
+                                
                                 
                             </div>
-                        <% //} %>
+                        <% } %>
                     </div>
                  <% }); %>
               </div>
@@ -118,12 +141,32 @@ var configFormTemplate = `
         </div>
 
         <div class="form-group row">
-        <label class="col-sm-2 col-form-label" title="An">Comparison Method</label>
-            <div class="col-sm-3">
-            <input class="form-check-input" type="checkbox" value="" id="compare_all_props" checked>
-            <label class="form-check-label" for="compare_all_props">
-              Compare values of all CSS properties
-            </label>
+        <label class="col-sm-2 col-form-label" title="An">Compared CSS Properties</label>
+            <div class="col-sm-8 form-check form-check-inline ">
+            <table id="css-property-table" class="table table-striped">
+            {{#cssProperties}}
+            <tr>
+                
+                <td>
+                   <small><b> {{group}}</b></small>
+                </td>
+                <td>
+
+                {{#properties}}
+                    
+                    <div class="form-check form-check-inline">
+                    <small><label class="form-check-label" for="compare_all_props">
+                    {{.}}  
+                    <input class="form-check-input" type="checkbox" value="{{.}}" id="{{.}}">
+                    </label></small>
+                    </div>
+                    
+                {{/properties}}
+                </td>
+                
+            </tr>
+            {{/cssProperties}}
+            </table>
         </div>
     </div>
         <div class="form-group row" style="display:none;">

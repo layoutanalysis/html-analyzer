@@ -52,6 +52,15 @@ var chartConfig = {
 };
 
 function showSimilarityChart(snapshotDates, datasets){
+    var chartContainer = document.getElementById('canvas').parentNode;
+    if (datasets.length === 0 || datasets.length > 10){
+        console.warn("Can only show a chart for 1 to 10 CSS Parameters, you chose " + datasets.length);
+        chartContainer.style.display = "none";
+        return false;
+    }
+    else {
+        chartContainer.style.display = "block";
+    }
     var ctx = document.getElementById("canvas").getContext("2d");
     var default_colors = ['#3366CC','#DC3912','#FF9900','#109618','#990099','#3B3EAC','#0099C6','#DD4477','#66AA00','#B82E2E','#316395','#994499','#22AA99','#AAAA11','#6633CC','#E67300','#8B0707','#329262','#5574A6','#3B3EAC'];
     chartConfig.data.labels = snapshotDates;
