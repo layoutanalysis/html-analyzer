@@ -55,16 +55,17 @@ var cssValueTemplates = {
               </h5>
               <div class="card-body" style="display:none;">
                  <% _.each(analyzedProperties, function(prop){ %>
-                    <div class="card <%= cardClass %>">
-                        <% var propSimilarity = changeSnapshot.get(prop + "-similarity"); %>
-                        <% if (propSimilarity < 1){ %>
+                    <% var propSimilarity = changeSnapshot.get(prop + "-similarity"); %>
+                    <% if (propSimilarity < 1){ %>
+                        <div class="card <%= cardClass %>">
                             <h6 class="card-header"><% print(prop); %> <span class="text-muted font-weight-normal">Similarity: <% print ((propSimilarity*100).toFixed(2)); %></span></h6>
                             <div class="card-body" style="display:none;">
-                                <h6><span class="text-muted">Value Comparison between this and the previous snapshot</span></h6>
-
                                 <% var removedPropValues = changeSnapshot.getValuesForProperty(prop, "removed"); %>
                                 <% var commonPropValues = changeSnapshot.getValuesForProperty(prop, "common"); %>
                                 <% var addedPropValues = changeSnapshot.getValuesForProperty(prop, "added"); %>
+                                <% var totalChangeNumber = removedPropValues.length + addedPropValues.length %>
+
+                                <span class="text-muted"><%= totalChangeNumber %> changes in '<%= prop %>' values between the <a href="<% print(changeSnapshot.getPreviousSnapshot().get("url")); %>" target="_blank">previous</a> and <a href="<% print(changeSnapshot.get("url")); %>" target="_blank">this website version:</a></span><br/><br/>
 
                                 <table class="table">
                                 <thead>
@@ -117,12 +118,13 @@ var cssValueTemplates = {
                                 
                                 
                             </div>
-                        <% } %>
+                        
                     </div>
-                 <% }); %>
+                 <% } //END IF%>
+                <% }); //END ANALYZED PROPERTIES %>
               </div>
             </div>
-        <% }); %>
+        <% }); // END SNAPSHOT%>
         </div>
     `;
 
