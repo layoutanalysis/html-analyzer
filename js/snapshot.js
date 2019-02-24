@@ -151,7 +151,7 @@ var Snapshots = Backbone.Collection.extend({
         return this.at(0).collection.url;
     },
     getUsedCSSProperties: function (){
-        var mostCommonCSSProperties = config.commonCSSProperties;
+        var mostCommonCSSProperties = config.allCSSProperties;
         var snapshotProperties = this.map(function(snapshot){
             return _(snapshot.getCSSProperties()).keys();
         });
