@@ -90,9 +90,6 @@ var Snapshot = Backbone.Model.extend({
             valueTemplate = 'color';
         }
 
-        if (cssProperty.indexOf('width') > -1 || cssProperty.indexOf('height') > -1 || cssProperty.indexOf('margin') > -1){
-            valueTemplate = 'dimension'
-        }
 
         if (cssProperty.indexOf('font-family') > -1){
             valueTemplate = 'fontFamily';
