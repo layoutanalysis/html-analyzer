@@ -33,7 +33,7 @@ function loadSnapshotCollection (snapshotUrl, callback){
         if (snapshotUrl.endsWith('.nd.json')){
             fetchOptions.dataFilter = function(data){
                 //assume a minimum css stats length of 1999 chars to filter out webarchive error pages
-                var data = data.split("\r\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
+                var data = data.split("\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
                 data.sort(function(a,b){
                     return parseInt(a["snapshot-date"]) -parseInt(b["snapshot-date"]);
                 });
