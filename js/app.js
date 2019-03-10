@@ -29,7 +29,18 @@ function loadSnapshotCollection (snapshotUrl, callback){
     else {
         var snapshotColl = new Snapshots();
         SNAPSHOT_CACHE[snapshotUrl] = snapshotColl;
-        var jqXHR = snapshotColl.fetch({url: snapshotUrl});
+        var fetchOptions = {url: snapshotUrl};
+        if (snapshotUrl.endsWith('.nd.json')){
+            fetchOptions.dataFilter = function(data){
+                //assume a minimum css stats length of 1999 chars to filter out webarchive error pages
+                var data = data.split("\r\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
+                data.sort(function(a,b){
+                    return parseInt(a["snapshot-date"]) -parseInt(b["snapshot-date"]);
+                });
+                return JSON.stringify(data);
+            }
+        }
+        var jqXHR = snapshotColl.fetch(fetchOptions);
         jqXHR.done(function(){
            callback(snapshotColl);
         });
