@@ -1,20 +1,20 @@
 var config = {
     'media': [
         {name:"Clarin", jsonFile:"data/all_css/clarin.2007-2017.json"},
-        {name:"Clarin 2009-2018", jsonFile:"data/all_css/node-red-captures/clarin.2009-2018.monthly.nd.json"},
+        {name:"Clarin 2009-2018", jsonFile:"data/all_css/getcomputedvalue/clarin.2009-2018.monthly.nd.json"},
         {name:"Die Presse", jsonFile:"data/all_css/diepresse.2007-2017.json"},
         {name:"Die Presse 2009-2018", jsonFile:"data/all_css/node-red-captures/diepresse.2009-2018.monthly.nd.json"},
         {name:"El Pais", jsonFile:"data/all_css/elpais.2007-2017.json"},
-       // {name:"El Pais 2009-2018", jsonFile:"data/all_css/node-red-captures/elpais.2009-2018.monthly.nd.json"},
+        {name:"El Pais 2009-2018", jsonFile:"data/all_css/node-red-captures/elpais.2009-2018.monthly.nd.json"},
         {name:"El Universal", jsonFile:"data/all_css/eluniversal.2007-2017.json"},
         {name:"Guardian", jsonFile:"data/all_css/guardian.2007-2017.json"},
-        //{name:"Guardian 2009-2018", jsonFile:"data/all_css/node-red-captures/guardian.2009-2018.monthly.nd.json"},
+        {name:"Guardian 2009-2018", jsonFile:"data/all_css/getcomputedvalue/guardian.2009-2018.monthly.nd.json"},
         {name:"New York Times", jsonFile:"data/all_css/nytimes.2007-2017.json"},
         {name:"O Globo", jsonFile:"data/all_css/oglobo.2007-2017.json"},
         {name:"Repubblica", jsonFile:"data/all_css/repubblica.2007-2017.json"},
         {name:"Sueddeutsche Zeitung", jsonFile:"data/all_css/sz.2007-2017.json"},
         {name:"Le Figaro", jsonFile:"data/all_css/lefigaro.2007-2017.json"},
-        //{name:"Le Figaro 2009-2018", jsonFile:"data/all_css/node-red-captures/figaro.2009-2018.monthly.nd.json"},
+        {name:"Le Figaro 2009-2018", jsonFile:"data/all_css/getcomputedvalue/figaro.2009-2018.monthly.nd.json"},
 
     ],
     'cssProperties':[

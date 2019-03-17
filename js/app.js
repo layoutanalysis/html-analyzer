@@ -33,7 +33,67 @@ function loadSnapshotCollection (snapshotUrl, callback){
         if (snapshotUrl.endsWith('.nd.json')){
             fetchOptions.dataFilter = function(data){
                 //assume a minimum css stats length of 1999 chars to filter out webarchive error pages
-                var data = data.split("\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
+                //var data = data.split("\r\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
+                data = data.split("\r\n").filter(item => item.length > 1999).map(item => {
+                    var jsonResult;
+                    try {
+                        jsonResult = JSON.parse(item);
+                    } catch (err) {
+                        console.log(err);
+                    } finally {
+                        return jsonResult;
+                    }
+                }).filter(item => {
+                    if (item === undefined){
+                        return false;
+                    }
+                    if (item && item.title && item.title === "Welcome to the US Petabox"){
+                        return false;
+                    }
+                    return true;
+                });
+
+
+                data = data.map(item => {
+                    var itemUrl = item.url;
+                    var processedProps = {};
+
+                    var cssProperties = (item.properties || _.pick(item, config.allCSSProperties))
+
+                    Object.entries(cssProperties).forEach(entry => {
+                        let propName = entry[0];
+                        let propValues = entry[1];
+
+                        //round property values to full pixels
+                        propValues = propValues.map(propVal => {
+                            if (propVal && propVal.endsWith && propVal.endsWith('px')){
+                                return Math.round(parseFloat(propVal)) + 'px';
+                            }
+                            return propVal;
+                        });
+
+                        //font-family to lowercase, only use first font -> more accurate similarity
+                        if (propName === 'font-family'){
+                            propValues = propValues.map(pVal => pVal.split(',')[0].toLowerCase());
+                        }
+
+                        //remove 0px border properties (browser default)
+                        if (propName.startsWith('border')){
+                            propValues = propValues.filter(pVal => !pVal.startsWith('0px '));
+                        }
+                        var uniquePropValues = Array.from(new Set(propValues));
+                        processedProps[propName] = uniquePropValues;
+                    
+                    })
+                
+
+                    item = processedProps;
+                    item.url = itemUrl;
+                    var datePartSplitter1 = itemUrl.indexOf("//web.archive.org/web/") > -1 ? "//web.archive.org/web/" : "//web.archive.org/";
+                    var datePartSplitter2 = itemUrl.indexOf('_im/') > -1 ? '_im/' : '/';
+                    item["snapshot-date"] = itemUrl.split(datePartSplitter1)[1].split(datePartSplitter2)[0];
+                    return item;
+                })
                 data.sort(function(a,b){
                     return parseInt(a["snapshot-date"]) -parseInt(b["snapshot-date"]);
                 });
