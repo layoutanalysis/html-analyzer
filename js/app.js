@@ -33,8 +33,7 @@ function loadSnapshotCollection (snapshotUrl, callback){
         if (snapshotUrl.endsWith('.nd.json')){
             fetchOptions.dataFilter = function(data){
                 //assume a minimum css stats length of 1999 chars to filter out webarchive error pages
-                //var data = data.split("\r\n").filter(item => item.length > 1999).map(item => JSON.parse(item));
-                data = data.split("\r\n").filter(item => item.length > 1999).map(item => {
+                data = data.split("\n").filter(item => item.length > 1999).map(item => {
                     var jsonResult;
                     try {
                         jsonResult = JSON.parse(item);
@@ -47,6 +46,7 @@ function loadSnapshotCollection (snapshotUrl, callback){
                     if (item === undefined){
                         return false;
                     }
+                    //filter out webarchive petabox error pages
                     if (item && item.title && item.title === "Welcome to the US Petabox"){
                         return false;
                     }
